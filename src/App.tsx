@@ -1,26 +1,59 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { FC, useEffect, useState, MouseEvent } from "react";
+import { SerchBar } from "./Serchbar";
+import { Api, Card } from "./Api";
+import { Gallery } from "./Gallery";
+import { Modal } from "./Modal";
+import { Button } from "./Button";
 
-function App() {
+const App: FC<{}> = () => {
+  const [query, setQuery] = useState<string>("");
+  const [card, setCard] = useState<Card[]>([]);
+  const [page, setPage] = useState<number>(1);
+  const [modalPage, setModalPage] = useState<string>("");
+  const [isOpenModal, setIsOpenModal] = useState<boolean>(false);
+  const [isButtonLoad, setIsButtonLoad] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (query === "") return;
+    Api(query, page).then(({ hits }) => {
+      setCard((prev) => prev.concat(hits));
+    });
+    setIsButtonLoad(true);
+  }, [query, page]);
+
+  const handleSetQuery = (serchQuery: string): void => {
+    setQuery(serchQuery);
+  };
+
+  const loadMoreBtnClick = (): void => {
+    setPage((prev) => prev + 1);
+  };
+
+  const handleClickCard = (evt: MouseEvent<HTMLAnchorElement>): void => {
+    evt.preventDefault();
+    setModalPage(evt.currentTarget.href);
+    setIsOpenModal(!isOpenModal);
+  };
+
+  const toggleModal = (): void => {
+    setIsOpenModal(!isOpenModal);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "20px",
+      }}
+    >
+      <SerchBar onFunc={handleSetQuery} />
+      <Gallery data={card} onModal={handleClickCard} />
+      {isButtonLoad && <Button onClick={loadMoreBtnClick} />}
+      {isOpenModal && <Modal onToggle={toggleModal}>{modalPage}</Modal>}
     </div>
   );
-}
+};
 
 export default App;
